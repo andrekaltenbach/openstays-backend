@@ -20,7 +20,7 @@ model Post {
   location          String
   fromDate          DateTime?
   untilDate         DateTime?
-  permanentOffer    Boolean?  @default(false)
+  permanentOffer    Boolean   @default(false)
   maxNumberOfNights Int
   hasFacilities     Boolean   @default(false)
   hasWifi           Boolean   @default(false)
@@ -28,8 +28,27 @@ model Post {
   hasWashingMachine Boolean   @default(false)
   hasShower         Boolean   @default(false)
   text              String
+  rating            Float     @default(0)
+  ratingCount       Int       @default(0)
+  imageUrl          String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   userName          String    @unique
   UserId            String    @default(cuid())
+  reviews           Review[]
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  title     String
+  text      String
+  rating    Int
+  userName  String
+  userId    String   @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id])
+
+  @@unique([postId, userName])
 }
