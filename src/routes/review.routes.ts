@@ -24,15 +24,20 @@ router.post('/posts/:postId/reviews', (req: Request, res: Response, next: NextFu
 });
 
 router.get('/posts/:postId/reviews', (req: Request, res: Response, next: NextFunction) => {
-  prisma.review
-    .findMany({ include: { post: true } })
-    .then((reviews) => {
-      console.log('Reviews fetched successfully:', reviews);
-      res.json(reviews);
-    })
-    .catch((error) => {
-      next(error);
-    });
+  const { postId } = req.params;
+  if (postId) {
+    prisma.review
+      .findMany({ where: { postId: postId }, include: { post: true } })
+      .then((reviews) => {
+        console.log('Reviews fetched successfully:', reviews);
+        res.json(reviews);
+      })
+      .catch((error) => {
+        next(error);
+      });
+  } else {
+    res.status(400).json({ error: 'Post ID is required' });
+  }
 });
 
 router.get(
