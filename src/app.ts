@@ -13,6 +13,7 @@ app.use('/api', indexRoutes);
 app.use('/api', postRoutes);
 app.use('/api', reviewRoutes);
 
-require('./error-handling')(app);
+import errorHandling from './error-handling/index';
+errorHandling(app);
 
 export default app;
