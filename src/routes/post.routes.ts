@@ -18,9 +18,54 @@ router.post('/posts', (req: Request, res: Response, next: NextFunction) => {
     });
 });
 
+type PostFilters = {
+  location?: string;
+  isTent?: boolean;
+  isCaravan?: boolean;
+  isBed?: boolean;
+};
+
 router.get('/posts', (req: Request, res: Response, next: NextFunction) => {
+  const location = req.query.location as string | undefined;
+  const isTent =
+    req.query.isTent === 'true' ? true : req.query.isTent === 'false' ? false : undefined;
+  const isCaravan =
+    req.query.isCaravan === 'true' ? true : req.query.isCaravan === 'false' ? false : undefined;
+  const isBed = req.query.isBed === 'true' ? true : req.query.isBed === 'false' ? false : undefined;
+  const filters: PostFilters = {};
+
+  if (location) {
+    filters.location = location;
+  }
+  if (isTent) {
+    filters.isTent = isTent;
+  }
+  if (isCaravan) {
+    filters.isCaravan = isCaravan;
+  }
+  if (isBed) {
+    filters.isBed = isBed;
+  }
   prisma.post
-    .findMany()
+    .findMany({
+      where: {
+        ...(filters.location && {
+          location: {
+            contains: filters.location,
+            mode: 'insensitive',
+          },
+        }),
+        ...(filters.isTent != undefined && {
+          isTent: filters.isTent,
+        }),
+        ...(filters.isCaravan != undefined && {
+          isCaravan: filters.isCaravan,
+        }),
+        ...(filters.isBed != undefined && {
+          isBed: filters.isBed,
+        }),
+      },
+    })
     .then((posts) => {
       console.log('Posts fetched successfully:', posts);
       res.json(posts);
