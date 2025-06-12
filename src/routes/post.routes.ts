@@ -4,20 +4,6 @@ import prisma from '../db';
 
 const router = express.Router();
 
-router.post('/posts', (req: Request, res: Response, next: NextFunction) => {
-  const newPost = req.body;
-  prisma.post
-    .create({ data: newPost })
-    .then((post) => {
-      console.log('Post created successfully:', post);
-      res.status(201).json(post);
-    })
-    .catch((error) => {
-      console.error('Error creating post:', error);
-      next(error);
-    });
-});
-
 type PostFilters = {
   location?: string;
   isTent?: boolean;
@@ -25,7 +11,20 @@ type PostFilters = {
   isBed?: boolean;
 };
 
-router.get('/posts', (req: Request, res: Response, next: NextFunction) => {
+router.post('/posts', async (req: Request, res: Response, next: NextFunction) => {
+  const newPost = req.body;
+
+  try {
+    const post = await prisma.post.create({ data: newPost });
+    console.log('Post created successfully:', post);
+    res.status(201).json(post);
+  } catch (error) {
+    console.error('Error creating post:', error);
+    next(error);
+  }
+});
+
+router.get('/posts', async (req: Request, res: Response, next: NextFunction) => {
   const location = req.query.location as string | undefined;
   const isTent =
     req.query.isTent === 'true' ? true : req.query.isTent === 'false' ? false : undefined;
@@ -46,8 +45,9 @@ router.get('/posts', (req: Request, res: Response, next: NextFunction) => {
   if (isBed) {
     filters.isBed = isBed;
   }
-  prisma.post
-    .findMany({
+
+  try {
+    const posts = await prisma.post.findMany({
       where: {
         ...(filters.location && {
           location: {
@@ -65,57 +65,53 @@ router.get('/posts', (req: Request, res: Response, next: NextFunction) => {
           isBed: filters.isBed,
         }),
       },
-    })
-    .then((posts) => {
-      console.log('Posts fetched successfully:', posts);
-      res.json(posts);
-    })
-    .catch((error) => {
-      next(error);
     });
+    console.log('Posts fetched successfully:', posts);
+    res.json(posts);
+  } catch (error) {
+    console.error('Error fetching posts:', error);
+    next(error);
+  }
 });
 
-router.get('/posts/:postId', (req: Request, res: Response, next: NextFunction) => {
+router.get('/posts/:postId', async (req: Request, res: Response, next: NextFunction) => {
   const { postId } = req.params;
-  prisma.post
-    .findUnique({ where: { id: postId } })
-    .then((post) => {
-      if (!post) {
-        return res.status(404).json({ message: 'Post not found' });
-      }
-      console.log('Post fetched successfully:', post);
-      res.json(post);
-    })
-    .catch((error) => {
-      next(error);
-    });
+  try {
+    const post = await prisma.post.findUnique({ where: { id: postId } });
+    if (!post) {
+      res.status(404).json({ message: 'Post not found' });
+      return;
+    }
+    console.log('Post fetched successfully:', post);
+    res.json(post);
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.put('/posts/:postId', (req: Request, res: Response, next: NextFunction) => {
+router.put('/posts/:postId', async (req: Request, res: Response, next: NextFunction) => {
   const { postId } = req.params;
   const updatedPost = req.body;
-  prisma.post
-    .update({ where: { id: postId }, data: updatedPost })
-    .then((post) => {
-      console.log('Post updated successfully:', post);
-      res.json(post);
-    })
-    .catch((error) => {
-      next(error);
-    });
+
+  try {
+    const post = await prisma.post.update({ where: { id: postId }, data: updatedPost });
+    console.log('Post updated successfully:', post);
+    res.json(post);
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.delete('/posts/:postId', (req: Request, res: Response, next: NextFunction) => {
+router.delete('/posts/:postId', async (req: Request, res: Response, next: NextFunction) => {
   const { postId } = req.params;
-  prisma.post
-    .delete({ where: { id: postId } })
-    .then((post) => {
-      console.log('Post deleted successfully:', post);
-      res.status(204).send();
-    })
-    .catch((error) => {
-      next(error);
-    });
+
+  try {
+    const post = await prisma.post.delete({ where: { id: postId } });
+    console.log('Post deleted successfully:', post);
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
 });
 
 export default router;
